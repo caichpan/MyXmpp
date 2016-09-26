@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10117" systemVersion="15F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="iN0-l3-epB" customClass="InputView">
+            <rect key="frame" x="0.0" y="0.0" width="600" height="50"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="gBr-6P-RGd">
+                    <rect key="frame" x="50" y="8" width="450" height="34"/>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                    <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                </textView>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Uix-E5-BK7">
+                    <rect key="frame" x="548" y="0.0" width="50" height="50"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="50" id="H14-2S-E4k"/>
+                        <constraint firstAttribute="width" constant="50" id="iqA-rB-N2h"/>
+                    </constraints>
+                    <state key="normal" backgroundImage="TypeSelectorBtn_Black"/>
+                </button>
+            </subviews>
+            <color key="backgroundColor" red="0.92156862750000001" green="0.92156862750000001" blue="0.95686274510000002" alpha="1" colorSpace="calibratedRGB"/>
+            <constraints>
+                <constraint firstItem="gBr-6P-RGd" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="8" id="2Im-xu-IpG"/>
+                <constraint firstAttribute="trailing" secondItem="Uix-E5-BK7" secondAttribute="trailing" constant="2" id="6TB-3R-1UA"/>
+                <constraint firstAttribute="trailing" secondItem="gBr-6P-RGd" secondAttribute="trailing" constant="100" id="F5c-rZ-OBp"/>
+                <constraint firstItem="gBr-6P-RGd" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="50" id="VyN-sU-IAz"/>
+                <constraint firstItem="Uix-E5-BK7" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" id="bhh-uk-OxN"/>
+                <constraint firstAttribute="bottom" secondItem="gBr-6P-RGd" secondAttribute="bottom" constant="8" id="fkS-sO-psg"/>
+            </constraints>
+            <nil key="simulatedStatusBarMetrics"/>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <connections>
+                <outlet property="addBtn" destination="Uix-E5-BK7" id="JRc-Vp-nCP"/>
+                <outlet property="textView" destination="gBr-6P-RGd" id="DB4-Ub-Xo8"/>
+            </connections>
+        </view>
+    </objects>
+    <resources>
+        <image name="TypeSelectorBtn_Black" width="35" height="35"/>
+    </resources>
+</document>

@@ -1,0 +1,35 @@
+//
+//  XMPPHeader.pch
+//  XMPP
+//
+//  Created by CCP on 16/9/18.
+//  Copyright © 2016年 CCP. All rights reserved.
+//
+
+#ifndef XMPPHeader_pch
+#define XMPPHeader_pch
+
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+
+#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+#import "ProgressHUD.h"
+#import "MyButton.h"
+#import "UIImage+WF.h"
+#import "UIButton+WF.h"
+#import "WCUserInfo.h"
+#import "UITextField+WF.h"
+#import "UIStoryboard+WF.h"
+#import "XMPPTool.h"
+
+// 自定义Log
+#ifdef DEBUG
+
+#define NSLog(...) NSLog(@"%s %d \n %@\n\n",__func__,__LINE__,[NSString stringWithFormat:__VA_ARGS__])
+
+#else
+#define NSLog(...)
+
+#endif
+#endif /* XMPPHeader_pch */
