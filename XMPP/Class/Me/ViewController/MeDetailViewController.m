@@ -14,6 +14,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *nicknameLabel;//昵称
 @property (weak, nonatomic) IBOutlet UILabel *weixinNumLabel;//微信号
 
+@property (nonatomic, weak)UILabel *emailLabel;
 
 @property (weak, nonatomic) IBOutlet UILabel *myadgress;
 @property (weak, nonatomic) IBOutlet UILabel *sex;
@@ -91,9 +92,14 @@
     // 使用note字段充当电话
  //   self.phoneLabel.text = myVCard.note;
     
-    //邮件
-    // 用mailer充当邮件
- //   self.emailLabel.text = myVCard.mailer;
+    //邮件解析
+    if (myVCard.emailAddresses.count > 0) {
+        //不管有多少个邮件，只取第一个
+        self.emailLabel.text = myVCard.emailAddresses[0];
+        NSLog(@"%@",myVCard.emailAddresses[0]);
+    }
+    
+
 }
 
 
@@ -201,7 +207,10 @@
  //   myvCard.note =  self.phoneLabel.text;
     
     // 邮件
-  //  myvCard.mailer = self.emailLabel.text;
+    //myvCard.mailer = self.emailLabel.text;
+    if (self.emailLabel.text.length > 0) {
+        myvCard.emailAddresses = @[self.emailLabel.text];
+    }
     
     //更新 这个方法内部会实现数据上传到服务，无需程序自己操作
     [[XMPPTool sharedXMPPTool].vCard updateMyvCardTemp:myvCard];

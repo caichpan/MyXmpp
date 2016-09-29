@@ -9,6 +9,7 @@
 #import "ChatListViewController.h"
 
 @interface ChatListViewController ()
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *indicatorView;
 
 @end
 
@@ -17,11 +18,38 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    // Uncomment the following line to preserve selection between presentations.
-    // self.clearsSelectionOnViewWillAppear = NO;
+    // 监听一个登录状态的通知
+    //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(xxx:) name:UIKeyboardWillHideNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(loginStatusChange:) name:ChatListStatusChangeNotification object:nil];
+
+}
+-(void)loginStatusChange:(NSNotification *)noti{
     
-    // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-    // self.navigationItem.rightBarButtonItem = self.editButtonItem;
+    //通知是在子线程被调用，刷新UI在主线程
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSLog(@"%@",noti.userInfo);
+        // 获取登录状态
+        int status = [noti.userInfo[@"loginStatus"] intValue];
+        
+        switch (status) {
+            case XMPPResultTypeConnecting://正在连接
+                [self.indicatorView startAnimating];
+                break;
+            case XMPPResultTypeNetErr://连接失败
+                [self.indicatorView stopAnimating];
+                break;
+            case XMPPResultTypeLoginSuccess://登录成功也就是连接成功
+                [self.indicatorView stopAnimating];
+                break;
+            case XMPPResultTypeLoginFailure://登录失败
+                [self.indicatorView stopAnimating];
+                break;
+            default:
+                break;
+        }
+    });
+    
+    
 }
 
 @end

@@ -170,6 +170,13 @@
     }
 }
 
+#pragma mark ResultController的代理
+-(void)controllerDidChangeContent:(NSFetchedResultsController *)controller{
+    // 刷新数据
+    [self.tableView reloadData];
+    [self scrollToTableBottom];
+}
+
 #pragma mark -表格的数据源
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
     return _resultsContr.fetchedObjects.count;
@@ -199,7 +206,7 @@
         
         //下图片显示
         [cell.imageView yy_setImageWithURL:[NSURL URLWithString:msg.body] placeholder:[UIImage imageNamed:@"DefaultProfileHead_qq"]];
-     //   [cell.imageView sd_setImageWithURL:[NSURL URLWithString:msg.body] placeholderImage:[UIImage imageNamed:@"DefaultProfileHead_qq"]];
+        //   [cell.imageView sd_setImageWithURL:[NSURL URLWithString:msg.body] placeholderImage:[UIImage imageNamed:@"DefaultProfileHead_qq"]];
         cell.textLabel.text = nil;
     }else if([chatType isEqualToString:@"text"]){
         
@@ -220,47 +227,6 @@
 
 -(void)scrollViewDidScroll:(UIScrollView *)scrollView{
     [self.view endEditing:YES];
-}
-
-#pragma mark ResultController的代理
--(void)controllerDidChangeContent:(NSFetchedResultsController *)controller{
-    // 刷新数据
-    [self.tableView reloadData];
-    [self scrollToTableBottom];
-}
-
-#pragma mark TextView的代理
--(void)textViewDidChange:(UITextView *)textView{
-    //获取ContentSize
-    CGFloat contentH = textView.contentSize.height;
-    NSLog(@"textView的content的高度 %f",contentH);
-    
-    // 大于33，超过一行的高度/ 小于68 高度是在三行内
-    if (contentH > 33 && contentH < 68 ) {
-        self.inputViewHeightConstraint.constant = contentH + 16;
-    }
-    
-    NSString *text = textView.text;
-    
-    // 换行就等于点击了的send
-    if ([text rangeOfString:@"\n"].length != 0) {
-        NSLog(@"发送数据 %@",text);
-        
-        // 去除换行字符
-        text = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        
-        [self sendMsgWithText:text bodyType:@"text"];
-        //清空数据
-        textView.text = nil;
-        
-        // 发送完消息 把inputView的高度改回来
-        self.inputViewHeightConstraint.constant = 50;
-        
-    }else{
-        NSLog(@"%@",textView.text);
-        
-    }
-    
 }
 
 
@@ -319,7 +285,7 @@
     
     // 2.拼接上传路径
   //  NSString *uploadUrl = [@"http://localhost:8080/Users/imac/Desktop/%E8%A7%86%E9%A2%91/XMPP/ServerDownd/" stringByAppendingString:fileName];
-     NSString *uploadUrl = [@"http://localhost:8080/Users/imac/Desktop/%E8%A7%86%E9%A2%91/XMPP/ServerDownd/" stringByAppendingString:fileName];
+     NSString *uploadUrl = [@"http://localhost:8080/usr/local/apache-tomcat-9.0.0.M10/webapps/ROOT/" stringByAppendingString:fileName];
     
     
     // 3.使用HTTP put 上传 *********** 图片上传请使用jpg格式 因为我写的服务器只接接收jpg
@@ -334,6 +300,40 @@
     
     
     // 图片发送成功，把图片的URL传Openfire的服务
+}
+
+#pragma mark TextView的代理
+-(void)textViewDidChange:(UITextView *)textView{
+    //获取ContentSize
+    CGFloat contentH = textView.contentSize.height;
+    NSLog(@"textView的content的高度 %f",contentH);
+    
+    // 大于33，超过一行的高度/ 小于68 高度是在三行内
+    if (contentH > 33 && contentH < 68 ) {
+        self.inputViewHeightConstraint.constant = contentH + 16;
+    }
+    
+    NSString *text = textView.text;
+    
+    // 换行就等于点击了的send
+    if ([text rangeOfString:@"\n"].length != 0) {
+        NSLog(@"发送数据 %@",text);
+        
+        // 去除换行字符
+        text = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        
+        [self sendMsgWithText:text bodyType:@"text"];
+        //清空数据
+        textView.text = nil;
+        
+        // 发送完消息 把inputView的高度改回来
+        self.inputViewHeightConstraint.constant = 50;
+        
+    }else{
+        NSLog(@"%@",textView.text);
+        
+    }
+    
 }
 
 #pragma mark 滚动到底部

@@ -9,6 +9,8 @@
 #import "XMPPTool.h"
 #import "XMPPTipView.h"
 
+NSString *const ChatListStatusChangeNotification = @"ChatListStatusChangeNotification";
+
 /*
  * 在AppDelegate实现登录
  
@@ -82,7 +84,9 @@ singleton_implementation(XMPPTool)
     _msgStorage = [[XMPPMessageArchivingCoreDataStorage alloc] init];
     _msgArchiving = [[XMPPMessageArchiving alloc] initWithMessageArchivingStorage:_msgStorage];
     [_msgArchiving activate:_xmppStream];
-
+    
+    //ios7以下要想在后台运行，除了添加plist还要加这句话，而且要在真机，模拟器是模拟不了的
+    _xmppStream.enableBackgroundingOnSocket = YES;
     
     // 设置代理
     [_xmppStream addDelegate:self delegateQueue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)];
@@ -124,6 +128,10 @@ singleton_implementation(XMPPTool)
         [self setupXMPPStream];
     }
     
+    
+    // 发送通知【正在连接】
+    [self postNotification:XMPPResultTypeConnecting];
+
     
     // 设置登录用户JID
     //resource 标识用户登录的客户端 iphone android
@@ -193,6 +201,18 @@ singleton_implementation(XMPPTool)
     
 }
 
+/**
+ * 通知 WCHistoryViewControllers 登录状态
+ *
+ */
+-(void)postNotification:(XMPPResultType)resultType{
+    
+    // 将登录状态放入字典，然后通过通知传递
+    NSDictionary *userInfo = @{@"loginStatus":@(resultType)};
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:ChatListStatusChangeNotification object:nil userInfo:userInfo];
+}
+
 
 #pragma mark -XMPPStream的代理
 #pragma mark 与主机连接成功
@@ -211,10 +231,20 @@ singleton_implementation(XMPPTool)
 }
 #pragma mark  与主机断开连接
 -(void)xmppStreamDidDisconnect:(XMPPStream *)sender withError:(NSError *)error{
+    // 如果有错误，代表连接失败
+    
+    // 如果没有错误，表示正常的断开连接(人为断开连接)
+    
     
     if(error && _resultBlock){
         _resultBlock(XMPPResultTypeNetErr);
     }
+    
+    if (error) {
+        //通知 【网络不稳定】
+        [self postNotification:XMPPResultTypeNetErr];
+    }
+
     NSLog(@"与主机断开连接 %@",error);
     
 }
@@ -228,6 +258,8 @@ singleton_implementation(XMPPTool)
     if(_resultBlock){
         _resultBlock(XMPPResultTypeLoginSuccess);
     }
+    
+    [self postNotification:XMPPResultTypeLoginSuccess];
 }
 
 #pragma mark 授权失败
@@ -237,6 +269,8 @@ singleton_implementation(XMPPTool)
     if (_resultBlock) {
         _resultBlock(XMPPResultTypeLoginFailure);
     }
+    
+     [self postNotification:XMPPResultTypeLoginFailure];
 }
 //   AppDelegate *app = [UIApplication sharedApplication].delegate;
 //   [app logout];
@@ -261,6 +295,33 @@ singleton_implementation(XMPPTool)
     
 }
 
+#pragma mark 接收到好友消息
+-(void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message{
+    NSLog(@"%@",message);
+    
+    //如果当前程序不在前台，发出一个本地通知
+    if([UIApplication sharedApplication].applicationState != UIApplicationStateActive){
+        NSLog(@"在后台");
+        
+        //本地通知
+        UILocalNotification *localNoti = [[UILocalNotification alloc] init];
+        
+        // 设置内容
+        localNoti.alertBody = [NSString stringWithFormat:@"%@\n%@",message.fromStr,message.body];
+        
+        // 设置通知执行时间
+        localNoti.fireDate = [NSDate date];
+        
+        //声音
+        localNoti.soundName = @"default";
+        
+        //执行
+        [[UIApplication sharedApplication] scheduleLocalNotification:localNoti];
+        
+        //{"aps":{'alert':"zhangsan\n have dinner":'sound':'default',badge:'12'}}
+    }
+}
+
 
 //- (BOOL)xmppStream:(XMPPStream *)sender didReceiveIQ:(XMPPIQ *)iq{
 //    
@@ -273,8 +334,11 @@ singleton_implementation(XMPPTool)
 //    return iq;
 //}
 
-#pragma mark 收到好友请求回调，好友注销下线回调
+#pragma mark 收到好友请求回调，以及好友注销下线，上线回调
 - (void)xmppStream:(XMPPStream *)sender didReceivePresence:(XMPPPresence *)presence;{
+    
+    //presence.from 消息是谁发送过来
+    
     
     if ([[presence type] isEqualToString:@"subscribe"])//收到好友请求
     {
@@ -302,18 +366,21 @@ singleton_implementation(XMPPTool)
                 return;
             }
         }
-    
-        //接收添加好友请求
-        XMPPTipView *view = [XMPPTipView creatViewWithTitle:[NSString stringWithFormat:@"%@想要加你为好友",jid.domain] succ:^(BOOL isYes) {
-            if (isYes) {//同意
-                 [self.roster acceptPresenceSubscriptionRequestFrom:friendJid andAddToRoster:YES];
-            }else{//拒绝
-                [self.roster rejectPresenceSubscriptionRequestFrom:friendJid];
-                [[XMPPTool sharedXMPPTool].roster removeUser:friendJid];//拒绝了最后把它删了，以免后患
-            }
-        }];
-        [[UIApplication sharedApplication].keyWindow addSubview:view];
-    
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            //接收添加好友请求
+            XMPPTipView *view = [XMPPTipView creatViewWithTitle:[NSString stringWithFormat:@"%@想要加你为好友",jid.domain] succ:^(BOOL isYes) {
+                if (isYes) {//同意
+                    [self.roster acceptPresenceSubscriptionRequestFrom:friendJid andAddToRoster:YES];
+                }else{//拒绝
+                    [self.roster rejectPresenceSubscriptionRequestFrom:friendJid];
+                    [[XMPPTool sharedXMPPTool].roster removeUser:friendJid];//拒绝了最后把它删了，以免后患
+                }
+            }];
+            [[UIApplication sharedApplication].keyWindow addSubview:view];
+
+        });
+        
         
        // 同意好友请求 [self.roster acceptPresenceSubscriptionRequestFrom:friendJid andAddToRoster:YES];
         
@@ -332,7 +399,11 @@ singleton_implementation(XMPPTool)
         NSString *jidStr = [NSString stringWithFormat:@"%@@%@",jid.domain,domain];
         XMPPJID *friendJid = [XMPPJID jidWithString:jidStr];
         [[XMPPTool sharedXMPPTool].roster removeUser:friendJid];
-        [ProgressHUD showMessageError:@"对方拒绝了你的请求"];
+        
+         dispatch_async(dispatch_get_main_queue(), ^{
+             [ProgressHUD showMessageError:@"对方拒绝了你的请求"];
+            });
+        
         NSLog(@"对方拒绝了你的请求");
     }
     

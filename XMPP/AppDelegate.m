@@ -37,11 +37,37 @@
         self.window.rootViewController = storayobard.instantiateInitialViewController;
         
         // 自动登录服务
-        [[XMPPTool sharedXMPPTool] xmppUserLogin:nil];
+        // 1秒后再自动登录  #warning 一般情况下，都不会马上连接，会稍微等等
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [[XMPPTool sharedXMPPTool] xmppUserLogin:nil];
+        });
+        
+    }
+    
+    //注册应用接收通知
+    if ([[UIDevice currentDevice].systemVersion doubleValue] > 8.0){
+        UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:UIUserNotificationTypeAlert|UIUserNotificationTypeBadge|UIUserNotificationTypeSound categories:nil];
+        [application registerUserNotificationSettings:settings];
     }
 
     return YES;
 }
+
+/*
+ *接收本地通知， 就是收到推送后你点击推送他会调用这里
+ */
+-(void)application:(UIApplication *)application didReceiveLocalNotification:(nonnull UILocalNotification *)notification{
+    NSLog(@"你点击了本地推送的通知");
+}
+
+/*
+ *远程通知
+ */
+-(void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo{
+     NSLog(@"你点击了远程推送的通知");
+}
+
 
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
