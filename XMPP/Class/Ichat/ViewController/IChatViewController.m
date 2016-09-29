@@ -8,8 +8,10 @@
 
 #import "IChatViewController.h"
 #import "InputView.h"
+#import "HttpTool.h"
+#import "YYWebImage.h"
 
-@interface IChatViewController ()<UITableViewDataSource,UITableViewDelegate,NSFetchedResultsControllerDelegate,UITextViewDelegate>{
+@interface IChatViewController ()<UITableViewDataSource,UITableViewDelegate,NSFetchedResultsControllerDelegate,UINavigationControllerDelegate,UITextViewDelegate,UIImagePickerControllerDelegate>{
     
     NSFetchedResultsController *_resultsContr;
     
@@ -18,9 +20,20 @@
 @property (nonatomic, strong) NSLayoutConstraint *inputViewBottomConstraint;//inputView底部约束
 @property (nonatomic, strong) NSLayoutConstraint *inputViewHeightConstraint;//inputView高度约束
 @property (nonatomic, weak) UITableView *tableView;
+
+@property (nonatomic, strong) HttpTool *httpTool;
 @end
 
 @implementation IChatViewController
+
+-(HttpTool *)httpTool{
+    if (!_httpTool) {
+        _httpTool = [[HttpTool alloc] init];
+    }
+    
+    return _httpTool;
+}
+
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -92,6 +105,10 @@
     InputView *inputView = [InputView inputView];
     inputView.textView.delegate = self;
     inputView.translatesAutoresizingMaskIntoConstraints = NO;
+    
+    
+    // 添加按钮事件
+    [inputView.addBtn addTarget:self action:@selector(addBtnClick) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:inputView];
     
     // 自动布局
@@ -168,13 +185,34 @@
     
     // 获取聊天消息对象
     XMPPMessageArchiving_Message_CoreDataObject *msg =  _resultsContr.fetchedObjects[indexPath.row];
-//    cell.contentView.backgroundColor =[UIColor redColor];
-    //显示消息
-    if ([msg.outgoing boolValue]) {//自己发
-        cell.textLabel.text = [NSString stringWithFormat:@"我发: %@",msg.body];
-    }else{//别人发的
-        cell.textLabel.text = [NSString stringWithFormat:@"好友发: %@",msg.body];
+    
+    
+    // 判断是图片还是纯文本
+    NSString *chatType = [msg.message attributeStringValueForName:@"bodyType"];
+    if ([chatType isEqualToString:@"image"]) {
+        
+        if ([msg.outgoing boolValue]) {
+            
+        }else{
+            
+        }
+        
+        //下图片显示
+        [cell.imageView yy_setImageWithURL:[NSURL URLWithString:msg.body] placeholder:[UIImage imageNamed:@"DefaultProfileHead_qq"]];
+     //   [cell.imageView sd_setImageWithURL:[NSURL URLWithString:msg.body] placeholderImage:[UIImage imageNamed:@"DefaultProfileHead_qq"]];
+        cell.textLabel.text = nil;
+    }else if([chatType isEqualToString:@"text"]){
+        
+        //显示消息
+        if ([msg.outgoing boolValue]) {//自己发
+            cell.textLabel.text = msg.body;
+        }else{//别人发的
+            cell.textLabel.text = msg.body;
+        }
+        
+        cell.imageView.image = nil;
     }
+    
     
     return cell;
 }
@@ -233,12 +271,69 @@
     
     //text 纯文本
     //image 图片
+    //audo 音频
     [msg addAttributeWithName:@"bodyType" stringValue:bodyType];
     
     // 设置内容
     [msg addBody:text];
     NSLog(@"%@",msg);
     [[XMPPTool sharedXMPPTool].xmppStream sendElement:msg];
+}
+
+#pragma mark 选择图片
+-(void)addBtnClick{
+    UIImagePickerController *imagePicker = [[UIImagePickerController alloc] init];
+    imagePicker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+    imagePicker.delegate = self;
+    [self presentViewController:imagePicker animated:YES completion:nil];
+    
+}
+
+#pragma mark 选取后图片的回调
+-(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info{
+    NSLog(@"%@",info);
+    // 隐藏图片选择器的窗口
+    [self dismissViewControllerAnimated:YES completion:nil];
+    
+    // 获取图片
+    UIImage *image = info[UIImagePickerControllerOriginalImage];
+    
+    // 把图片发送到文件服务器
+    //http post put
+    /**
+     * put实现文件上传没post那烦锁，而且比POST快
+     * put的文件上传路径就是下载路径
+     
+     *文件上传路径 http://localhost:8080/imfileserver/Upload/Image/ + "图片名【程序员自已定义】"
+     */
+    
+    // 1.取文件名 用户名 + 时间(201412111537)年月日时分秒
+    NSString *user = [WCUserInfo sharedWCUserInfo].user;
+    
+    NSDateFormatter *dataFormatter = [[NSDateFormatter alloc] init];
+    dataFormatter.dateFormat = @"yyyyMMddHHmmss";
+    NSString *timeStr = [dataFormatter stringFromDate:[NSDate date]];
+    
+    // 针对我的服务，文件名不用加后缀
+    NSString *fileName = [user stringByAppendingString:timeStr];
+    
+    // 2.拼接上传路径
+  //  NSString *uploadUrl = [@"http://localhost:8080/Users/imac/Desktop/%E8%A7%86%E9%A2%91/XMPP/ServerDownd/" stringByAppendingString:fileName];
+     NSString *uploadUrl = [@"http://localhost:8080/Users/imac/Desktop/%E8%A7%86%E9%A2%91/XMPP/ServerDownd/" stringByAppendingString:fileName];
+    
+    
+    // 3.使用HTTP put 上传 *********** 图片上传请使用jpg格式 因为我写的服务器只接接收jpg
+
+    [self.httpTool uploadData:UIImageJPEGRepresentation(image, 0.75) url:[NSURL URLWithString:uploadUrl] progressBlock:nil completion:^(NSError *error) {
+        
+        if (!error) {
+            NSLog(@"上传成功");
+            [self sendMsgWithText:uploadUrl bodyType:@"image"];
+        }
+    }];
+    
+    
+    // 图片发送成功，把图片的URL传Openfire的服务
 }
 
 #pragma mark 滚动到底部
