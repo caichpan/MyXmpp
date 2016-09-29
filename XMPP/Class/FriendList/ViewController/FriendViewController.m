@@ -18,14 +18,25 @@
 
 @implementation FriendViewController
 
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:YES];
+    /*
+     *如果还没链接服务器就加载好友列表会出问题，所以判断下
+     */
+    if ([WCUserInfo sharedWCUserInfo].connectedStatus) {
+        // 从数据里加载好友列表显示
+        [self loadFriends2];
+    }
+
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.title = @"通讯录";
     
     //[self loadFriends];第一种方法加载好友列表数据，但是不会实时更新列表，所以用第二种，操！！
     
-    // 从数据里加载好友列表显示
-    [self loadFriends2];
+    
 }
 
 -(void)loadFriends2{
@@ -59,7 +70,7 @@
     if (err) {
         NSLog(@"%@",err);
     }
-    
+    [self.tableView reloadData];
 }
 
 #pragma mark 当数据的内容发生改变后，会调用 这个方法

@@ -23,6 +23,8 @@ singleton_interface(WCUserInfo);
  */
 @property (nonatomic, assign) BOOL  loginStatus;
 
+@property (nonatomic, assign) BOOL connectedStatus;
+
 @property (nonatomic, copy) NSString *registerUser;//注册的用户名
 @property (nonatomic, copy) NSString *registerPwd;//注册的密码
 @property (nonatomic, copy) NSString *jid;

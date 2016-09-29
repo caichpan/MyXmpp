@@ -10,6 +10,7 @@
 
 @interface ChatListViewController ()
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *indicatorView;
+@property (weak, nonatomic) IBOutlet UIView *loadingView;
 
 @end
 
@@ -17,6 +18,9 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.title = @"聊天";
+    self.loadingView.backgroundColor =[UIColor clearColor];
+    self.indicatorView.backgroundColor = [UIColor clearColor];
     
     // 监听一个登录状态的通知
     //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(xxx:) name:UIKeyboardWillHideNotification object:nil];
@@ -36,12 +40,14 @@
                 [self.indicatorView startAnimating];
                 break;
             case XMPPResultTypeNetErr://连接失败
+                [ProgressHUD showMessageError:@"链接失败"];
                 [self.indicatorView stopAnimating];
                 break;
             case XMPPResultTypeLoginSuccess://登录成功也就是连接成功
                 [self.indicatorView stopAnimating];
                 break;
             case XMPPResultTypeLoginFailure://登录失败
+                [ProgressHUD showMessageError:@"登陆失败"];
                 [self.indicatorView stopAnimating];
                 break;
             default:

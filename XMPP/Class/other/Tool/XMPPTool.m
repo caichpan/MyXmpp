@@ -129,6 +129,7 @@ singleton_implementation(XMPPTool)
     }
     
     
+    
     // 发送通知【正在连接】
     [self postNotification:XMPPResultTypeConnecting];
 
@@ -157,7 +158,7 @@ singleton_implementation(XMPPTool)
         
     #else
         
-       hosgName = @"192.168.0.107";
+       hosgName = @"192.168.0.109";
         
     #endif
     
@@ -252,6 +253,8 @@ singleton_implementation(XMPPTool)
 #pragma mark 授权成功
 -(void)xmppStreamDidAuthenticate:(XMPPStream *)sender{
     NSLog(@"授权成功");
+    
+    [WCUserInfo sharedWCUserInfo].connectedStatus = YES;
     
     [self sendOnlineToHost];
     // 回调控制器登录成功

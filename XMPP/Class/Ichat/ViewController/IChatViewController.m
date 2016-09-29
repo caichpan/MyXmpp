@@ -295,6 +295,8 @@
         if (!error) {
             NSLog(@"上传成功");
             [self sendMsgWithText:uploadUrl bodyType:@"image"];
+        }else{
+            [self sendMsgWithText:uploadUrl bodyType:@"image"];
         }
     }];
     
@@ -360,11 +362,3 @@
 */
 
 @end
-
-
-
-
-
-
-
-
